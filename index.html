@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Katana Tracker · SNIPER DUELS</title>
+<style>
+  :root {
+    --bg: #0c0d10;
+    --bg-2: #14161b;
+    --bg-3: #1c1f26;
+    --line: #262932;
+    --line-2: #313641;
+    --text: #e8eaf0;
+    --muted: #8b90a0;
+    --muted-2: #5d6271;
+    --accent: #d4b65a;
+    --accent-soft: rgba(212, 182, 90, 0.12);
+    --sell: #e87766;
+    --buy:  #6ec18a;
+    --ft:   #b39cf0;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .app {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .brand h1 {
+    font-size: 18px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin: 0;
+    font-weight: 600;
+  }
+  .brand .sub {
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    color: var(--muted-2);
+    text-transform: uppercase;
+  }
+  .stats {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+  .search-wrap {
+    flex: 1 1 320px;
+    position: relative;
+    min-width: 260px;
+  }
+  .search-wrap svg {
+    position: absolute;
+    left: 14px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted-2);
+    pointer-events: none;
+  }
+  .search {
+    width: 100%;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 12px 16px 12px 42px;
+    border-radius: 10px;
+    font-size: 14px;
+    transition: border-color .12s, background .12s;
+  }
+  .search::placeholder { color: var(--muted-2); }
+  .search:focus {
+    outline: none;
+    border-color: var(--line-2);
+    background: #181b22;
+  }
+
+  .toggle {
+    display: inline-flex;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 3px;
+    align-self: stretch;
+  }
+  .toggle button {
+    background: transparent;
+    border: 0;
+    color: var(--muted);
+    padding: 0 18px;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 7px;
+    font-weight: 600;
+    transition: background .12s, color .12s;
+  }
+  .toggle button:hover { color: var(--text); }
+  .toggle button.active[data-side="sell"] {
+    background: rgba(232, 119, 102, 0.14);
+    color: var(--sell);
+  }
+  .toggle button.active[data-side="buy"] {
+    background: rgba(110, 193, 138, 0.14);
+    color: var(--buy);
+  }
+
+  /* Grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+
+  /* Card */
+  .card {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: border-color .12s, background .12s, transform .12s;
+    position: relative;
+  }
+  .card:hover {
+    border-color: var(--line-2);
+    background: #161920;
+  }
+  .card.no-data {
+    opacity: 0.55;
+  }
+
+  .title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .skin-name {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--text);
+    flex: 0 0 auto;
+  }
+  .skin-katana {
+    font-size: 12px;
+    color: var(--muted-2);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-left: 2px;
+  }
+
+  /* Dropdown chip */
+  .chip {
+    position: relative;
+    display: inline-flex;
+  }
+  .chip > button {
+    appearance: none;
+    background: var(--bg-3);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 4px 9px 4px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: border-color .12s, background .12s;
+  }
+  .chip > button:hover { border-color: var(--line-2); }
+  .chip > button::after {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-right: 1.5px solid var(--muted);
+    border-bottom: 1.5px solid var(--muted);
+    transform: rotate(45deg) translateY(-1px);
+    margin-left: 2px;
+  }
+  .chip.open > button { border-color: var(--line-2); background: #20242c; }
+  .chip.q-WW > button { color: #9aa3b6; }
+  .chip.q-SI > button { color: #6ec0e8; }
+  .chip.q-MC > button { color: #d4b65a; }
+  .chip.ft-on > button { color: var(--ft); }
+
+  .menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 30;
+    background: #1a1d24;
+    border: 1px solid var(--line-2);
+    border-radius: 10px;
+    padding: 4px;
+    min-width: 100px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.55);
+    display: none;
+  }
+  .chip.open .menu { display: block; }
+  .menu button {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: 0;
+    color: var(--text);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 7px 10px;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+  .menu button:hover { background: var(--bg-3); }
+  .menu button .hint {
+    display: block;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: var(--muted-2);
+    margin-top: 2px;
+    text-transform: none;
+  }
+
+  /* Price block */
+  .price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-top: auto;
+    cursor: default;
+  }
+  .price {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .price.sell { color: var(--sell); }
+  .price.buy  { color: var(--buy); }
+  .price-empty {
+    font-size: 13px;
+    color: var(--muted-2);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .price-meta {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+
+  /* Tooltip on price hover */
+  .tip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #0a0b0e;
+    border: 1px solid var(--line-2);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 11px;
+    color: var(--text);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .12s;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.6);
+  }
+  .tip .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    font-variant-numeric: tabular-nums;
+  }
+  .tip .row + .row { margin-top: 3px; }
+  .tip .k { color: var(--muted); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; }
+  .price-row:hover .tip { opacity: 1; }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+  }
+  .empty-state strong { color: var(--text); display: block; margin-bottom: 6px; font-size: 14px; }
+
+  footer {
+    margin-top: 48px;
+    color: var(--muted-2);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-align: center;
+  }
+
+  @media (max-width: 520px) {
+    .app { padding: 22px 16px 60px; }
+    .price { font-size: 26px; }
+    .toggle button { padding: 0 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <h1>Katana Tracker</h1>
+      <span class="sub">· Sniper Duels</span>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <div class="controls">
+    <div class="search-wrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="search" class="search" type="text" placeholder="Search skin — try “crimson”, “katana orochi”, or just “katana”" autocomplete="off" />
+    </div>
+    <div class="toggle" id="sideToggle">
+      <button data-side="sell" class="active">Sell</button>
+      <button data-side="buy">Buy</button>
+    </div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <footer>Prices aggregated from community listings · Hover a price for min / max</footer>
+</div>
+
+<script>
+/* ------------------------------------------------------------------
+ *  LISTINGS — parsed from Discord trade messages.
+ *  Each entry: { skin, q (WW|SI|MC|null), ft (bool), side (sell|buy), price }
+ *  Only Katana entries are included.
+ * ------------------------------------------------------------------ */
+const RAW = [
+  // ---- crying in designer clothes ----
+  ["Orochi","SI",false,"sell",55],
+  ["Orochi","SI",true ,"sell",70],
+  ["Dynasty","WW",false,"sell",40],
+  ["OG Bluesteel","MC",false,"sell",75],
+
+  // ---- Stb Jmoney ----
+  ["Peppermint","SI",false,"sell",50],
+
+  // ---- Blayence ----
+  ["Orochi","SI",false,"sell",45],
+  ["Adurite","WW",false,"sell",40],
+  ["Orochi","SI",false,"sell",40],
+  ["Adurite","WW",false,"sell",40],
+  ["Vanilla","MC",false,"sell",35],
+
+  // ---- 100+ / Absurd ----
+  ["Adurite","MC",false,"sell",140],
+  ["Blacksteel","SI",false,"sell",50],
+  ["Orochi","MC",true ,"sell",100],
+  ["Cherry","SI",false,"sell",45],
+
+  // ---- .hoz ----
+  ["Frostborn","MC",false,"sell",120],
+  ["Orochi",null,false,"sell",45],
+  ["Frostborn","MC",false,"sell",120],
+
+  // ---- xavi ----
+  ["Vanilla",null,false,"sell",45],
+
+  // ---- Leethal ----
+  ["Cherry","WW",true ,"sell",45],
+  ["Cherry","WW",true ,"sell",40],
+  ["Cherry","WW",true ,"sell",45],
+  ["Blacksteel","WW",false,"sell",40],
+
+  // ---- gen ----
+  ["Crimson","WW",true ,"sell",35],
+  ["Crimson","MC",false,"sell",100],
+  ["Muramasa","MC",false,"sell",87],
+  ["Muramasa","MC",false,"sell",90],
+  ["Orochi","MC",false,"sell",75],
+
+  // ---- guner ----
+  ["Orochi","SI",false,"sell",40],
+
+  // ---- 6ikz ----
+  ["Wanwood","SI",false,"sell",55],
+
+  // ---- celibate ----
+  ["Bombastic","WW",false,"sell",35],
+  ["Vanilla",null,false,"sell",50],
+  ["True White",null,false,"sell",200],
+
+  // ---- 4eamg / quicksell ----
+  ["Crimson","SI",true ,"sell",55],
+  ["Crimson","SI",false,"sell",45],
+  ["Crimson","SI",false,"sell",45],
+  ["Dynasty","WW",false,"sell",30],
+  ["Muramasa","SI",false,"sell",45],
+  ["Muramasa","WW",false,"sell",30],
+  ["Orochi","SI",false,"sell",45],
+  ["Dynasty","SI",false,"sell",45],
+
+  // ---- SOUL / GLT ----
+  ["Adurite","MC",false,"sell",125],
+  ["Blacksteel","MC",false,"sell",85],
+  ["Bombastic","MC",false,"sell",65],
+  ["Crimson","MC",true ,"sell",130],
+  ["Crimson","SI",false,"sell",55],
+  ["Muramasa","WW",false,"sell",35],
+  ["Orochi","MC",false,"sell",85],
+  ["Orochi","SI",false,"sell",55],
+  ["Shogun",null,true ,"sell",65],
+  ["Vanilla",null,false,"sell",45],
+  ["Vanilla",null,false,"sell",45],
+  ["Wanwood","MC",true ,"sell",130],
+
+  // ---- sire ----
+  ["Dynasty","MC",true ,"sell",90],
+
+  // ---- Dedidu ----
+  ["Dynasty","MC",false,"sell",70],
+  ["Dynasty","WW",false,"sell",40],
+
+  // ---- e (new) ----
+  ["Crimson","SI",false,"sell",65],
+
+  // ---- levdevv ----
+  ["Shogun","MC",true ,"sell",60],
+  ["Wanwood","SI",false,"sell",45],
+  ["Muramasa","WW",false,"sell",40],
+
+  // ---- sooon ----
+  ["OG Bluesteel","MC",true ,"sell",100],
+  ["Vanilla","MC",false,"sell",45],
+  ["Muramasa","SI",false,"sell",65],
+
+  // ---- AXO ----
+  ["Crimson","SI",false,"sell",55],
+
+  // ---- KPT ----
+  ["Dynasty",null,false,"sell",45],
+
+  // ---- Simplicity ----
+  ["Adurite","MC",false,"sell",110],
+
+  // ---- h1op ----
+  ["Dynasty","MC",false,"sell",80],
+  ["Dynasty","WW",false,"sell",40],
+  ["Crimson","WW",false,"sell",40],
+
+  // ---- Mesnite ----
+  ["Vanilla",null,false,"sell",45],
+
+  // ---- polygraph ----
+  ["Cookie","MC",true ,"sell",75],
+  ["Vanilla","MC",true ,"sell",50],
+  ["Wanwood","WW",false,"sell",35],
+  ["Crimson","WW",false,"sell",30],
+  ["Black Iron","WW",false,"sell",40],
+  ["Wanwood","WW",false,"sell",35],
+
+  // ---- lui14 ----
+  ["Adurite","MC",false,"sell",75],
+  ["Adurite","MC",false,"sell",75],
+  ["Muramasa","MC",false,"sell",60],
+  ["Muramasa","MC",false,"sell",60],
+  ["Crimson","MC",false,"sell",60],
+  ["Crimson","MC",false,"sell",60],
+  ["Katana of Destiny","MC",false,"sell",60],
+  ["Dynasty","MC",false,"sell",40],
+  ["Orochi","MC",false,"sell",60],
+
+  // ---- Relic (price sheet, treat as sell) ----
+  ["Malachite","MC",false,"sell",150],
+  ["Adurite","MC",false,"sell",140],
+  ["Muramasa","MC",false,"sell",130],
+  ["Crimson","MC",false,"sell",115],
+  ["Bombastic","MC",true ,"sell",100],
+  ["Crimson","SI",true ,"sell",100],
+  ["Dynasty","MC",false,"sell",90],
+  ["Malachite","SI",false,"sell",90],
+  ["OG Bluesteel","MC",false,"sell",75],
+  ["Bombastic","MC",false,"sell",70],
+  ["Muramasa","SI",false,"sell",70],
+  ["Wanwood","MC",false,"sell",65],
+  ["OG Bluesteel","SI",true ,"sell",60],
+  ["Vanilla","MC",true ,"sell",65],
+  ["Orochi","SI",false,"sell",55],
+  ["Shogun","MC",false,"sell",50],
+  ["Muramasa","WW",true ,"sell",50],
+  ["Wanwood","SI",false,"sell",45],
+
+  // ---- mr†ïñ ----
+  ["Orochi","SI",false,"sell",40],
+  ["Dynasty","SI",false,"sell",50],
+
+  // ---- Bonerbeau ---- (no katana prices)
+
+  // ---- genki ----
+  ["Blacksteel","SI",false,"sell",60],
+
+  // ---- youngn LF -> ignore ----
+
+  // ---- Buying (Chi quicksell rates) ----
+  ["Crimson","MC",false,"buy",110],
+  ["Katana of Destiny","MC",false,"buy",130],
+  ["Crimson","SI",false,"buy",65],
+  ["Crimson","SI",false,"buy",65],
+  ["Crimson","SI",false,"buy",65],
+  ["Malachite","SI",false,"buy",65],
+  ["Black Iron","SI",false,"buy",45],
+  ["Orochi","SI",false,"buy",45],
+  ["Orochi","SI",false,"buy",45],
+  ["Katana of Destiny",null,false,"buy",45],
+  ["Bombastic","WW",false,"buy",35],
+
+  // ---- crying in designer clothes (BUYING list earlier) ----
+  ["Orochi","SI",false,"buy",55],
+  ["Orochi","SI",true ,"buy",70],
+  ["Dynasty","WW",false,"buy",40],
+  ["OG Bluesteel","MC",false,"buy",75],
+];
+
+const SKIN_ORDER = [
+  "Crimson", "Dynasty", "Orochi", "Muramasa", "Adurite", "Malachite",
+  "Blacksteel", "OG Bluesteel", "Bombastic", "Wanwood", "Shogun",
+  "Cherry", "Vanilla", "Peppermint", "Cookie", "Black Iron",
+  "Katana of Destiny", "Frostborn", "True White"
+];
+
+/* -------------------- state -------------------- */
+const state = {
+  side: "sell",
+  query: ""
+};
+
+/* -------------------- helpers -------------------- */
+function aggregate(listings) {
+  // group by (skin, q, ft) -> {count,min,max,avg,sum}
+  const groups = new Map();
+  for (const l of listings) {
+    const key = `${l.skin}|${l.q || "_"}|${l.ft ? 1 : 0}|${l.side}`;
+    let g = groups.get(key);
+    if (!g) {
+      g = { skin: l.skin, q: l.q, ft: l.ft, side: l.side, prices: [] };
+      groups.set(key, g);
+    }
+    g.prices.push(l.price);
+  }
+  for (const g of groups.values()) {
+    g.count = g.prices.length;
+    g.min = Math.min(...g.prices);
+    g.max = Math.max(...g.prices);
+    g.avg = g.prices.reduce((a,b) => a+b, 0) / g.prices.length;
+  }
+  return groups;
+}
+
+const LISTINGS = RAW.map(r => ({ skin: r[0], q: r[1], ft: r[2], side: r[3], price: r[4] }));
+const GROUPS = aggregate(LISTINGS);
+
+// build per-skin index: skin -> { sides: {sell,buy}, qualities: Set, fts: Set, count }
+function buildSkinIndex() {
+  const idx = new Map();
+  for (const l of LISTINGS) {
+    let s = idx.get(l.skin);
+    if (!s) {
+      s = { skin: l.skin, qualities: new Set(), fts: new Set(), counts: { sell: 0, buy: 0 } };
+      idx.set(l.skin, s);
+    }
+    s.qualities.add(l.q);
+    s.fts.add(!!l.ft);
+    s.counts[l.side] += 1;
+  }
+  return idx;
+}
+const SKIN_INDEX = buildSkinIndex();
+
+// canonical sort: known order, then alphabetical for any unknowns
+function sortedSkins() {
+  const all = [...SKIN_INDEX.keys()];
+  return all.sort((a, b) => {
+    const ia = SKIN_ORDER.indexOf(a);
+    const ib = SKIN_ORDER.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+}
+
+/* -------------------- search -------------------- */
+// "Crimson Katana", "Katana Crimson", "katana", "crimson" all match.
+// Tokenize, drop "katana", require remaining tokens to all be substrings of skin name.
+function matchesSearch(skin, query) {
+  if (!query) return true;
+  const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const skinL = skin.toLowerCase();
+  // If the user typed *only* "katana" (one token), show everything.
+  const meaningful = tokens.filter(t => t !== "katana");
+  if (meaningful.length === 0) return true;
+  return meaningful.every(t => skinL.includes(t));
+}
+
+/* -------------------- per-card state -------------------- */
+// Each rendered card has its own selected quality + ft. We store it keyed by skin.
+const cardState = new Map(); // skin -> { q, ft }
+
+function pickInitial(skin) {
+  // Pick a sensible default: best-data combo for current side.
+  const candidates = [];
+  for (const g of GROUPS.values()) {
+    if (g.skin === skin && g.side === state.side) {
+      candidates.push(g);
+    }
+  }
+  if (candidates.length === 0) {
+    // fall back to other side
+    for (const g of GROUPS.values()) {
+      if (g.skin === skin) candidates.push(g);
+    }
+  }
+  // Prefer non-FT, then highest count, then quality order MC>SI>WW>null
+  const qRank = { MC: 0, SI: 1, WW: 2, null: 3 };
+  candidates.sort((a, b) => {
+    if (a.ft !== b.ft) return a.ft ? 1 : -1;
+    if (b.count !== a.count) return b.count - a.count;
+    return (qRank[a.q] ?? 4) - (qRank[b.q] ?? 4);
+  });
+  const top = candidates[0];
+  return { q: top ? top.q : null, ft: top ? top.ft : false };
+}
+
+function cardKey(skin) {
+  if (!cardState.has(skin)) cardState.set(skin, pickInitial(skin));
+  return cardState.get(skin);
+}
+
+function lookup(skin, q, ft, side) {
+  return GROUPS.get(`${skin}|${q || "_"}|${ft ? 1 : 0}|${side}`);
+}
+
+/* -------------------- render -------------------- */
+const gridEl = document.getElementById("grid");
+const statsEl = document.getElementById("stats");
+
+function fmt(n) {
+  if (n == null) return "—";
+  const rounded = Math.round(n);
+  return `$${rounded}`;
+}
+
+function render() {
+  const skins = sortedSkins().filter(s => matchesSearch(s, state.query));
+
+  // close any open dropdowns when rerendering
+  gridEl.innerHTML = "";
+
+  if (skins.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.innerHTML = `<strong>No matches.</strong> Try “katana”, a skin name (“crimson”), or clear the search.`;
+    gridEl.appendChild(empty);
+  } else {
+    for (const skin of skins) {
+      gridEl.appendChild(renderCard(skin));
+    }
+  }
+
+  // stats line
+  const sellN = LISTINGS.filter(l => l.side === "sell").length;
+  const buyN  = LISTINGS.filter(l => l.side === "buy").length;
+  const skinN = SKIN_INDEX.size;
+  statsEl.textContent = `${skinN} skins · ${sellN} sell · ${buyN} buy listings`;
+}
+
+function renderCard(skin) {
+  const idx = SKIN_INDEX.get(skin);
+  const { q, ft } = cardKey(skin);
+  const card = document.createElement("div");
+  card.className = "card";
+
+  // ---- title row with dropdowns ----
+  const titleRow = document.createElement("div");
+  titleRow.className = "title-row";
+
+  const name = document.createElement("span");
+  name.className = "skin-name";
+  name.textContent = skin;
+  titleRow.appendChild(name);
+
+  const katanaLbl = document.createElement("span");
+  katanaLbl.className = "skin-katana";
+  katanaLbl.textContent = "Katana";
+  titleRow.appendChild(katanaLbl);
+
+  // Quality dropdown (only if multiple qualities exist for this skin)
+  const qOptions = [...idx.qualities];
+  if (qOptions.length > 0) {
+    titleRow.appendChild(buildChip({
+      kind: "q",
+      current: q,
+      options: qOptions,
+      label: q || "ANY",
+      classNames: q ? `chip q-${q}` : "chip",
+      onPick: (val) => {
+        const st = cardKey(skin);
+        st.q = val;
+        render();
+      },
+      describe: (v) => v == null ? { label: "ANY", hint: "Quality unspecified" } :
+        v === "WW" ? { label: "WW", hint: "Well-Worn · lowest" } :
+        v === "SI" ? { label: "SI", hint: "Slight · mid" } :
+        { label: "MC", hint: "Minimal · best" }
+    }));
+  }
+
+  // FT dropdown
+  const ftOptions = [...idx.fts];
+  if (ftOptions.length > 1) {
+    titleRow.appendChild(buildChip({
+      kind: "ft",
+      current: ft,
+      options: ftOptions,
+      label: ft ? "FT" : "STD",
+      classNames: ft ? "chip ft-on" : "chip",
+      onPick: (val) => {
+        const st = cardKey(skin);
+        st.ft = val;
+        render();
+      },
+      describe: (v) => v
+        ? { label: "FT", hint: "Fragtrakr" }
+        : { label: "STD", hint: "No tracker" }
+    }));
+  } else if (ftOptions[0] === true) {
+    // Only FT data exists
+    const tag = document.createElement("span");
+    tag.className = "chip ft-on";
+    tag.innerHTML = `<button type="button" style="cursor:default" disabled>FT</button>`;
+    tag.querySelector("button").style.cursor = "default";
+    tag.querySelector("button").style.opacity = "0.85";
+    titleRow.appendChild(tag);
+  }
+
+  card.appendChild(titleRow);
+
+  // ---- price row ----
+  const priceRow = document.createElement("div");
+  priceRow.className = "price-row";
+
+  const g = lookup(skin, q, ft, state.side);
+  if (g) {
+    const price = document.createElement("div");
+    price.className = `price ${state.side}`;
+    price.textContent = fmt(g.avg);
+    priceRow.appendChild(price);
+
+    const meta = document.createElement("div");
+    meta.className = "price-meta";
+    meta.textContent = `avg · ${g.count} listing${g.count === 1 ? "" : "s"}`;
+    priceRow.appendChild(meta);
+
+    // tooltip
+    const tip = document.createElement("div");
+    tip.className = "tip";
+    tip.innerHTML = `
+      <div class="row"><span class="k">Min</span><span>${fmt(g.min)}</span></div>
+      <div class="row"><span class="k">Max</span><span>${fmt(g.max)}</span></div>
+      <div class="row"><span class="k">Avg</span><span>${fmt(g.avg)}</span></div>
+    `;
+    priceRow.appendChild(tip);
+  } else {
+    // Try fallback: same skin/quality, opposite FT, on same side
+    const fb = lookup(skin, q, !ft, state.side);
+    const empty = document.createElement("div");
+    empty.className = "price-empty";
+    empty.textContent = "No data";
+    priceRow.appendChild(empty);
+
+    const meta = document.createElement("div");
+    meta.className = "price-meta";
+    if (fb) {
+      meta.textContent = `${ft ? "STD" : "FT"} avg ${fmt(fb.avg)}`;
+    } else {
+      meta.textContent = `no ${state.side} listings`;
+    }
+    priceRow.appendChild(meta);
+    card.classList.add("no-data");
+  }
+
+  card.appendChild(priceRow);
+  return card;
+}
+
+function buildChip({ current, options, classNames, onPick, describe }) {
+  const wrap = document.createElement("span");
+  wrap.className = classNames;
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.textContent = describe(current).label;
+  wrap.appendChild(btn);
+
+  const menu = document.createElement("div");
+  menu.className = "menu";
+  for (const opt of options) {
+    const d = describe(opt);
+    const mb = document.createElement("button");
+    mb.type = "button";
+    mb.innerHTML = `${d.label}<span class="hint">${d.hint}</span>`;
+    mb.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeAllMenus();
+      onPick(opt);
+    });
+    menu.appendChild(mb);
+  }
+  wrap.appendChild(menu);
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const wasOpen = wrap.classList.contains("open");
+    closeAllMenus();
+    if (!wasOpen) wrap.classList.add("open");
+  });
+
+  return wrap;
+}
+
+function closeAllMenus() {
+  document.querySelectorAll(".chip.open").forEach(c => c.classList.remove("open"));
+}
+document.addEventListener("click", closeAllMenus);
+
+/* -------------------- events -------------------- */
+document.getElementById("search").addEventListener("input", (e) => {
+  state.query = e.target.value.trim();
+  render();
+});
+
+document.getElementById("sideToggle").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-side]");
+  if (!b) return;
+  state.side = b.dataset.side;
+  document.querySelectorAll("#sideToggle button").forEach(x => x.classList.toggle("active", x === b));
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
